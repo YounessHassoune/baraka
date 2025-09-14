@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { FaLeaf } from "react-icons/fa";
 import { CiSearch } from "react-icons/ci";
 
@@ -26,12 +27,18 @@ const Header = () => {
             </a>
           </div>
           <div className="flex items-center space-x-4">
-            <button className="text-gray-600 hover:text-green-500">
+            <Link 
+              href="/auth/signin" 
+              className="text-gray-600 hover:text-green-500 transition-colors"
+            >
               Login
-            </button>
-            <button className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">
+            </Link>
+            <Link 
+              href="/auth/signup" 
+              className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+            >
               Sign Up
-            </button>
+            </Link>
           </div>
         </nav>
       </div>
