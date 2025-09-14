@@ -23,8 +23,12 @@ export async function middleware(request: NextRequest) {
   // Public routes that don't require authentication
   const publicRoutes = ["/auth/signin", "/auth/signup", "/"];
   const authRoutes = ["/auth/signin", "/auth/signup"];
+  const sellerRoutes = ["/seller"];
   const isPublicRoute = publicRoutes.includes(pathname);
   const isAuthRoute = authRoutes.includes(pathname);
+  const isSellerRoute = sellerRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
 
   try {
     // Get session from request cookies
@@ -42,6 +46,11 @@ export async function middleware(request: NextRequest) {
 
     // If user is authenticated and trying to access auth pages (but not home page)
     if (session.isLoggedIn && isAuthRoute) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    // If user is trying to access seller routes but is not a seller
+    if (isSellerRoute && session.isLoggedIn && session.role !== "seller") {
       return NextResponse.redirect(new URL("/", request.url));
     }
 

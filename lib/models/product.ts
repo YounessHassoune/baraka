@@ -8,6 +8,7 @@ export interface IProduct extends Document {
   startDate: Date;
   endDate: Date;
   imageLink: string;
+  sellerId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,6 +61,11 @@ const ProductSchema = new Schema<IProduct>(
       required: [true, "Image link is required"],
       trim: true,
     },
+    sellerId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "Seller ID is required"],
+    },
   },
   {
     timestamps: true,
@@ -69,6 +75,7 @@ const ProductSchema = new Schema<IProduct>(
 // Index for better query performance
 ProductSchema.index({ startDate: 1, endDate: 1 });
 ProductSchema.index({ name: 1 });
+ProductSchema.index({ sellerId: 1 });
 
 export const Product =
   models.Product || model<IProduct>("Product", ProductSchema);
