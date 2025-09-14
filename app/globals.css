@@ -1,6 +1,23 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Recoleta Font Face Declarations */
+@font-face {
+  font-family: 'Recoleta';
+  src: url('/fonts/recoleta-regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Recoleta';
+  src: url('/fonts/recoleta-bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -8,6 +25,7 @@
   --color-foreground: rgb(var(--foreground));
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-family-recoleta: 'Recoleta', ui-serif, serif;
   --color-sidebar-ring: rgb(var(--sidebar-ring));
   --color-sidebar-border: rgb(var(--sidebar-border));
   --color-sidebar-accent-foreground: rgb(var(--sidebar-accent-foreground));
@@ -113,6 +131,17 @@
   --sidebar-accent-foreground: 248 250 252;
   --sidebar-border: 30 41 59;
   --sidebar-ring: 59 130 246;
+}
+
+/* Heading Styles using Recoleta */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-recoleta);
+  font-weight: 700;
+}
+
+.font-serif {
+  font-family: var(--font-family-recoleta);
+  font-weight: 700;
 }
 
 @layer base {
