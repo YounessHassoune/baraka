@@ -43,6 +43,7 @@ export async function createSession(userData: Omit<SessionData, "isLoggedIn">) {
   session.userId = userData.userId;
   session.email = userData.email;
   session.name = userData.name;
+  session.role = userData.role;
   session.isLoggedIn = true;
 
   await session.save();

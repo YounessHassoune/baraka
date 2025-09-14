@@ -7,6 +7,7 @@ export interface Product {
   startDate: Date;
   endDate: Date;
   imageLink: string;
+  sellerId: string;
   createdAt: Date;
   updatedAt: Date;
 }

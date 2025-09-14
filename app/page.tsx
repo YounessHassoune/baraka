@@ -1,4 +1,4 @@
-import Header from "./components/Header";
+import DynamicHeader from "@/components/dynamic-header";
 import Partners from "./components/Partners";
 import FoodCategories from "./components/FoodCategories";
 import AvailableDeals from "./components/AvailableDeals";
@@ -10,10 +10,9 @@ import Tips from "./components/Tips";
 import Footer from "./components/Footer";
 
 export default async function Home() {
-
   return (
     <main>
-      <Header />
+      <DynamicHeader />
       <Partners />
       <FoodCategories />
       <AvailableDeals />

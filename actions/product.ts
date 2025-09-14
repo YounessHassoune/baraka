@@ -5,6 +5,7 @@ import { actionClient } from "@/lib/safe-action";
 import { Product } from "@/lib/models/product";
 import dbConnect from "@/lib/mongodb";
 import { revalidatePath } from "next/cache";
+import { requireSeller } from "@/lib/auth-utils";
 import type { ActionResponse } from "@/types/actions";
 
 // Validation schemas
@@ -97,11 +98,15 @@ export const createProduct = actionClient
   .inputSchema(createProductSchema)
   .action(async ({ parsedInput: input }): Promise<ActionResponse<any>> => {
     try {
+      const session = await requireSeller();
       await dbConnect();
 
-      const product = await Product.create(input);
+      const product = await Product.create({
+        ...input,
+        sellerId: session.userId,
+      });
 
-      revalidatePath("/products");
+      revalidatePath("/seller/products");
 
       return {
         success: true,
@@ -124,7 +129,76 @@ export const createProduct = actionClient
     }
   });
 
-// Get all products action
+// Get seller's products action
+export const getSellerProducts = actionClient
+  .inputSchema(getProductsSchema)
+  .action(async ({ parsedInput: input }): Promise<ActionResponse<any>> => {
+    try {
+      const session = await requireSeller();
+      await dbConnect();
+
+      const { search, minPrice, maxPrice, inStock, active, page, limit } =
+        input;
+      const skip = (page - 1) * limit;
+
+      // Build query with seller filter
+      const query: any = { sellerId: session.userId };
+
+      if (search) {
+        query.name = { $regex: search, $options: "i" };
+      }
+
+      if (minPrice !== undefined || maxPrice !== undefined) {
+        query.price = {};
+        if (minPrice !== undefined) query.price.$gte = minPrice;
+        if (maxPrice !== undefined) query.price.$lte = maxPrice;
+      }
+
+      if (inStock !== undefined) {
+        query.quantity = inStock ? { $gt: 0 } : { $eq: 0 };
+      }
+
+      if (active !== undefined) {
+        const now = new Date();
+        if (active) {
+          query.startDate = { $lte: now };
+          query.endDate = { $gte: now };
+        } else {
+          query.$or = [{ startDate: { $gt: now } }, { endDate: { $lt: now } }];
+        }
+      }
+
+      const [products, total] = await Promise.all([
+        Product.find(query)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        Product.countDocuments(query),
+      ]);
+
+      return {
+        success: true,
+        data: {
+          products: JSON.parse(JSON.stringify(products)),
+          pagination: {
+            page,
+            limit,
+            total,
+            pages: Math.ceil(total / limit),
+          },
+        },
+      };
+    } catch (error) {
+      console.error("Error fetching seller products:", error);
+      return {
+        success: false,
+        error: "Failed to fetch products. Please try again.",
+      };
+    }
+  });
+
+// Get all products action (public)
 export const getProducts = actionClient
   .inputSchema(getProductsSchema)
   .action(async ({ parsedInput: input }): Promise<ActionResponse<any>> => {
@@ -226,9 +300,23 @@ export const updateProduct = actionClient
   .inputSchema(updateProductSchema)
   .action(async ({ parsedInput: input }): Promise<ActionResponse<any>> => {
     try {
+      const session = await requireSeller();
       await dbConnect();
 
       const { id, ...updateData } = input;
+
+      // Check if product belongs to the seller
+      const existingProduct = await Product.findOne({
+        _id: id,
+        sellerId: session.userId,
+      });
+
+      if (!existingProduct) {
+        return {
+          success: false,
+          error: "Product not found or you don't have permission to edit it",
+        };
+      }
 
       // Validate discount price against regular price if both are being updated
       if (
@@ -258,15 +346,8 @@ export const updateProduct = actionClient
         runValidators: true,
       }).lean();
 
-      if (!product) {
-        return {
-          success: false,
-          error: "Product not found",
-        };
-      }
-
-      revalidatePath("/products");
-      revalidatePath(`/products/${id}`);
+      revalidatePath("/seller/products");
+      revalidatePath(`/seller/products/${id}`);
 
       return {
         success: true,
@@ -286,18 +367,23 @@ export const deleteProduct = actionClient
   .inputSchema(deleteProductSchema)
   .action(async ({ parsedInput: input }): Promise<ActionResponse<any>> => {
     try {
+      const session = await requireSeller();
       await dbConnect();
 
-      const product = await Product.findByIdAndDelete(input.id).lean();
+      // Check if product belongs to the seller before deleting
+      const product = await Product.findOneAndDelete({
+        _id: input.id,
+        sellerId: session.userId,
+      }).lean();
 
       if (!product) {
         return {
           success: false,
-          error: "Product not found",
+          error: "Product not found or you don't have permission to delete it",
         };
       }
 
-      revalidatePath("/products");
+      revalidatePath("/seller/products");
 
       return {
         success: true,
